@@ -7,12 +7,10 @@ import json
 import os
 
 
-
-
 # extraindo dados da api e salvando o json localmente
 
 def extract_coins_data(**context):
-    # LENDO VARIÁVEIS DE AMBIENTE DENTRO DA FUNÇÃO PARA EVITAR 'None'
+
     COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
     API_URL = os.getenv("API_URL")
     LOCAL_PATH = os.getenv("LOCAL_PATH")
@@ -20,10 +18,8 @@ def extract_coins_data(**context):
     if not API_URL:
         raise ValueError("A variável de ambiente 'API_URL' não foi carregada. Verifique o .env ou docker-compose.")
 
-    # MUDANÇA: Usando a header CORRETA para a Demo API
     headers = {"x-cg-demo-api-key": COINGECKO_API_KEY}
     
-    # Adicionando um timeout para evitar que a tarefa trave
     TIMEOUT_SECONDS = 30 
     
     try:
@@ -44,22 +40,7 @@ def extract_coins_data(**context):
 
     print(f"Dados extraídos e salvos em {LOCAL_PATH}")
 
-# upando no s3 
-def upload_to_s3(**context):
 
-    BUCKET_NAME = os.getenv("BUCKET_NAME")
-    S3_PATH = os.getenv("S3_PATH")
-    LOCAL_PATH = os.getenv("LOCAL_PATH")
-    PROFILE_NAME = os.getenv("PROFILE_NAME")
-    
-    session = boto3.Session(profile_name=PROFILE_NAME)
-    s3 = session.client("s3")
-
-    execution_date = context["ds"]
-    s3_key = f"{S3_PATH}/date={execution_date}/data.json"
-
-    s3.upload_file(LOCAL_PATH, BUCKET_NAME, s3_key)
-    print(f"Arquivo enviado para s3://{BUCKET_NAME}/{s3_key}")
 # upando no s3 
 
 def upload_to_s3(**context):
