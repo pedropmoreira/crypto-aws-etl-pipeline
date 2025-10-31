@@ -1,0 +1,93 @@
+import sys
+from awsglue.utils import getResolvedOptions
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.context import SparkContext
+from pyspark.sql import functions as F
+from pyspark.sql.types import DoubleType, TimestampType
+
+# prametros de entrada 
+args = getResolvedOptions(sys.argv, [
+    'JOB_NAME',
+    'S3_INPUT_PATH',
+    'S3_OUTPUT_PATH'
+])
+
+S3_INPUT_PATH = args['S3_INPUT_PATH']
+S3_OUTPUT_PATH = args['S3_OUTPUT_PATH']
+
+#inicializando o spark
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#lendo da camada bronze 
+print(f"Lendo dados do caminho: {S3_INPUT_PATH}")
+df = spark.read.option("multiline", "true").json(S3_INPUT_PATH)
+
+print("Schema inicial:")
+df.printSchema()
+
+#explindo alguns arrasy 
+if 'array' in df.columns:
+    print("Detectado campo 'array' — explodindo registros...")
+    df = df.select(F.explode(F.col('array')).alias('c'), F.col('date'))
+    df = df.select('c.*', 'date')
+
+#renomeando alguns nomes 
+possible_renames = {
+    'total_volume': 'volume',
+    'price_change_percentage_7d_in_currency': 'percentage_7d'
+}
+
+for old, new in possible_renames.items():
+    if old in df.columns:
+        df = df.withColumnRenamed(old, new)
+
+# passando pra timestamp 
+if 'last_updated' in df.columns:
+    df = df.withColumn('last_updated', F.to_timestamp(F.col('last_updated')))
+else:
+    df = df.withColumn('last_updated', F.lit(None).cast(TimestampType()))
+
+# cria coluna de data (YYYY-MM-DD) a partir de last_updated
+df = df.withColumn('date', F.to_date(F.col('last_updated')))
+
+# faz o cast pra double 
+num_cols = [
+    'current_price', 'market_cap', 'volume',
+    'price_change_24h', 'ath', 'atl', 'percentage_7d'
+]
+
+for c in num_cols:
+    if c in df.columns:
+        df = df.withColumn(c, F.col(c).cast(DoubleType()))
+
+# colunas que queremos manter 
+desired_cols = [
+    'id', 'symbol', 'name', 'date', 'last_updated',
+    'current_price', 'market_cap', 'volume',
+    'price_change_24h', 'percentage_7d', 'ath', 'atl'
+]
+
+# aplicando apenas as colunas que queremos agora 
+cols_existentes = [c for c in desired_cols if c in df.columns]
+df_final = df.select(*cols_existentes)
+
+# tratando nulls e duplicados 
+df_final = df_final.dropDuplicates(['id', 'last_updated'])
+df_final = df_final.filter(F.col('id').isNotNull())
+
+#printando schema final
+print("Schema final limpo:")
+df_final.printSchema()
+print(f"Total de registros finais: {df_final.count()}")
+
+# gravando os dados no path especificado 
+print(f"Gravando dados tratados em: {S3_OUTPUT_PATH}")
+df_final.write.mode("append").partitionBy('date').parquet(S3_OUTPUT_PATH)
+
+print("job concluído com sucesso!")
+job.commit()
