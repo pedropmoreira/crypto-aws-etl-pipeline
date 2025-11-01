@@ -226,20 +226,87 @@ cron(0 13 ? * 2 *)
 - Coloque no scheduler cron(15 13 ? * 2 *)
 - Agora o crawler vai sempre rodar depois do script. 
 
-### Lembre-se de criar o 
+## 8️⃣ Criar Camada Gold
 
-### 8️⃣ Criar Camada Gold
-- Realizar agregações e métricas. 
-- Salvar resultados finais em S3 gold.
+### 8.1 Definindo métricas da camada gold. 
+#### PREÇOS:
+| Métrica             | Como Calcular      | Objetivo   |
+|:--------------------|:-------------:|--------------:|
+|  **current_price**    | Já existe no Silver | Preço atual da moeda no snapshot|
+|  **high_24h** | Já existe no Silver | Maior preço nas últimas 24h |
+|  **low_24h** | Já existe no Silver | Menor preço nas últimas 24h |
+|  **avg_price** | (high_24h + low_24h)/2 | Média diária de negociação — mais representativa que apenas o preço atua |
+|  **price_range** | high_24h - low_24h| Amplitude do preço — indica volatilidade do dia |
+|  **volatility** | price_range / avg_price | Percentual de oscilação diária, indicador de risco |
+|  **price_change_24h** | Já existe no Silver | Variação do preço nas últimas 24h |
+|  **percentage_7d** | Já existe no Silver | Variação percentual nos últimos 7 dias — tendência semanal |
 
-### 9️⃣ Modelar Bancos de Dados
+#### Capitalização e Volume:
+| Métrica             | Como Calcular      | Objetivo   |
+|:--------------------|:-------------:|--------------:|
+|  **market_cap**    | Já existe no Silver | Valor total da moeda no mercado|
+|  **market_cap_rank** | Já existe no Silver | Ranking por valor de mercado|
+|  **market_cap_share** | market_cap / SUM(market_cap) (por snapshot) | Percentual de participação da moeda no mercado total |
+|  **volume** | Já existe no Silver| Volume de negociação, indicador de liquidez |
+
+#### Força Histórica:
+| Métrica             | Como Calcular      | Objetivo   |
+|:--------------------|:-------------:|--------------:|
+|  **ath**    | Já existe no Silver | Preço máximo histórico da moeda|
+|  **atl** | Já existe no Silver | Preço mínimo histórico|
+|  **drawdown_since_ath** | (ath - current_price)/ath | Queda percentual em relação ao topo histórico — risco da moeda |
+|  **volume** | Já existe no Silver| Volume de negociação, indicador de liquidez |
+
+#### Oferta e Diluição:
+| Métrica             | Como Calcular      | Objetivo   |
+|:--------------------|:-------------:|--------------:|
+|  **circulating_supply**    | Já existe no Silver | Quantidade de moedas em circulação|
+|  **max_supply** | Já existe no Silver | Limite máximo de emissão de moedas|
+|  **fully_diluted_valuation** | Já existe no Silver | Capitalização máxima potencial |
+|  **supply_utilization** | circulating_supply / max_supply| Percentual da oferta emitida, indicador de escassez |
+
+#### Ranking e Métricas Agregadas: 
+| Métrica             | Como Calcular      | Objetivo   |
+|:--------------------|:-------------:|--------------:|
+|  **rank_by_marketcap**    | dense_rank() sobre market_cap | Ranking automático de valor de mercado|
+|   **top_n_gainers** | baseado em price_change_24h | Destaque das moedas que mais valorizaram |
+|  **top_n_losers** | baseado em price_change_24h | Destaque das moedas que mais perderam valor |
+
+#### Metadados_Controle: 
+| Métrica             | Como Calcular      | Objetivo   |
+|:--------------------|:-------------:|--------------:|
+|  **last_updated**    | já existe | Referência temporal do snapshot|
+|  **snapshot_id** | concat de id + last_updated | ID único para rastreabilidade e garantia de idempotência|
+
+### 8.2 Fazendo o Glue Job (Silver -> Gold): 
+
+- Configurando as variaveis de path :  
+```
+--S3_INPUT_PATH (onde estao seus dados silver).
+--S3_OUTPUT_PATH(pra onde vão seus dados gold)
+```
+
+- Coloque a role glue que criamos anteriormente .
+
+- Agora cole o script que esta na pasta scripts do projeto  : 
+
+- Configure o scheduler é so fazer cron(30 13 ? * 2 *).
+
+- Agora vamos criar o database da camada gold .
+
+- Agora vamos rodar o crawler da camada gold tambem .
+
+- Configure o Scheduler para : cron(45 13 ? * 2 *).
+
+
+## 9️⃣ Modelar Bancos de Dados
 ###### Em andamento...
 - Schema OLTP (normalizado).
 - Schema DW (modelo estrela).
 
-### 1️⃣0️⃣ Ingestão nos Bancos
+## 1️⃣0️⃣ Ingestão nos Bancos
 - Carregar dados da camada gold no PostgreSQL.
 
-### 1️⃣1️⃣ Power BI
+## 1️⃣1️⃣ Power BI
 - Conectar ao schema DW do PostgreSQL.
 - Criar dashboards interativos de análises de criptomoedas.
