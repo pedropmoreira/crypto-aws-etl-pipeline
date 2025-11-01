@@ -214,6 +214,20 @@ cron(0 13 ? * 2 *)
     }
 ```
 
+## 7.8 Crawler e Database para Camada Silver:
+
+### Antes de tudo crie um database no lake formation.
+
+### Vamos criar o crawler e configurar pra rodar toda segunda após o script :
+
+- Escolha a pasta onde estão seus dados silver .
+- Coloque a role glue criada anteriormente . 
+- Coloque o database silver que criamos . 
+- Coloque no scheduler cron(15 13 ? * 2 *)
+- Agora o crawler vai sempre rodar depois do script. 
+
+### Lembre-se de criar o 
+
 ### 8️⃣ Criar Camada Gold
 - Realizar agregações e métricas. 
 - Salvar resultados finais em S3 gold.
