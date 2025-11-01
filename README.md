@@ -140,12 +140,6 @@ cron(0 12 ? * 2 *)
 - Salvar em Parquet na camada Silver
 
 
-### Colunas finais : 
-```
-id, symbol, name, date, last_updated, current_price, market_cap, volume,
-price_change_24h, percentage_7d, ath, atl
-```
-
 ## Configurações necessárias (Do Script) :
 
 ### 1. Colocar a Role Glue criada no script. 
@@ -205,12 +199,18 @@ cron(0 13 ? * 2 *)
     "symbol":"aave",
     "name":"Aave",
     "last_updated":"2025-10-30 21:45:27.899000000",
-    "current_price":211.24,"market_cap":3223271500,
+    "current_price":211.24,
+    "high_24h":234.53,
+    "low_24h":208.22,
+    "market_cap":3223271500,
+    "market_cap_rank":47,
+    "fully_diluted_valuation":3379629509,
     "volume":314855460,
     "price_change_24h":-23.291466577591734,
     "percentage_7d":-5.670162832082476,
-    "ath":661.69,
-    "atl":26.02
+    "ath":661.69,"atl":26.02,
+    "circulating_supply":15259762.604990805,
+    "max_supply":16000000
     }
 ```
 
