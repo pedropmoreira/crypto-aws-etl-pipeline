@@ -62,23 +62,38 @@ docker-compose down (Quando terminar)
 ```
 ## 5️⃣ Configurar .env
 ```
-# Docker Airflow
+# docker airflow
 AIRFLOW_IMAGE_NAME=apache/airflow:3.0.0
 AIRFLOW_UID=50000
 
-# API
-COINGECKO_API_KEY=SUA_API_KEY
-API_URL= LINK_DA_API
+#chave api 
+COINGECKO_API_KEY= SUACHAVEAPI
+
+#url api
+API_URL=https://api.coingecko.com/metricasqueforusar
+
+#configs aws 
+BUCKET_NAME=NOMEDOSEUBUCKET
+S3_PATH=bronze/SUAPASTA
 LOCAL_PATH=/tmp/coins_markets.json
+PROFILE_NAME=NOMEDOSEUPROFILE
 
-# AWS
-BUCKET_NAME= NOME_DO_SEU_BUCKET
-S3_PATH=bronze/coins_markets
-PROFILE_NAME=NOME_DO_SEU_USER
+S3_KEY=CAMINHOENOMEDOSEUARQUIVOGOLD
 
-# AWS credentials
-AWS_ACCESS_KEY_ID=SUA_CHAVE
-AWS_SECRET_ACCESS_KEY=SUA_CHAVE_SECRETA
+# aws variaveis : 
+
+AWS_ACCESS_KEY_ID=sua_access_keyid
+AWS_SECRET_ACCESS_KEY=sua_secret_access_key
+AWS_DEFAULT_REGION=regiao
+
+# variaveis 
+DB_HOST=host.docker.internal
+DB_NAME_DW=nome_do_seu_DW
+DB_NAME_FN=nome_do_seu_3fn
+DB_USER=userdopostgre
+DB_PASS=senhadopostgre
+DB_PORT=portdopostgre
+
 
 ```
 ## 6️⃣ Criar DAG no Airflow
@@ -303,7 +318,8 @@ cron(0 13 ? * 2 *)
 {
     "id":"lombard-staked-btc",
     "name":"Lombard Staked BTC",
-    "current_price":107429,"high_24h":111727,
+    "current_price":107429,
+    "high_24h":111727,
     "low_24h":106587,
     "avg_price":109157,
     "price_range":5140,
@@ -313,7 +329,8 @@ cron(0 13 ? * 2 *)
     "market_cap":1303673055,
     "market_cap_rank":95,
     "market_cap_share":0.00035046558802565616,
-    "ath":125812,"atl":52119,
+    "ath":125812,
+    "atl":52119,
     "drawdown_since_ath":0.1461148380122723,
     "circulating_supply":12132.55546961,
     "max_supply":null,
@@ -485,8 +502,24 @@ CREATE TABLE historico (
 
 
 ## 1️⃣0️⃣ Ingestão nos Bancos
-- Carregar dados da camada gold no PostgreSQL.
 
-## 1️⃣1️⃣ Power BI
+### 10.1 caso necessário configure no docker-compose a sua pasta scripts 
+- algo assim ( ${AIRFLOW_PROJ_DIR:-.}/scripts:/opt/airflow/scripts)
+
+### 10.2 Rode o Script (load_gold_to_dw.py) para popular seu DW:
+
+```
+docker exec -it (nome do seu worker) bash
+python /opt/airflow/scripts/load_gold_to_dw.py
+```
+
+### 10.3 Rode o Script (load_gold_to_3fn.py) para popular seu DW:
+
+```
+docker exec -it (nome do seu worker) bash
+python /opt/airflow/scripts/load_gold_to_3fn.py
+```
+
+## 1️⃣1️⃣ Power BI / Tableau
 - Conectar ao schema DW do PostgreSQL.
 - Criar dashboards interativos de análises de criptomoedas.

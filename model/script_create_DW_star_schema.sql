@@ -34,7 +34,6 @@ CREATE TABLE fact_dados_cripto (
     id_moeda INT NOT NULL REFERENCES dim_moeda(id_moeda),
     id_fonte INT NOT NULL REFERENCES dim_fonte(id_fonte),
     id_tempo INT NOT NULL REFERENCES dim_tempo(id_tempo),
-    id_snapshot INT NOT NULL REFERENCES dim_snapshot(id_snapshot),
     current_price NUMERIC,
     high_24 NUMERIC,
     low_24 NUMERIC,
@@ -54,4 +53,17 @@ CREATE TABLE fact_dados_cripto (
 	top_n_gainers INT CHECK (top_n_gainers IN (0,1)),
 	top_n_losers INT CHECK (top_n_losers IN (0,1))
 );
+
+ALTER TABLE dim_moeda
+ADD CONSTRAINT unique_id_original UNIQUE (id_original);
+
+ALTER TABLE dim_fonte
+ADD CONSTRAINT unique_nome_fonte UNIQUE (nome_fonte);
+
+ALTER TABLE dim_tempo
+ADD CONSTRAINT unique_data_hora UNIQUE (data_hora);
+
+ALTER TABLE fact_dados_cripto
+ADD CONSTRAINT unique_fact UNIQUE (id_moeda, id_fonte, id_tempo);
+
 
