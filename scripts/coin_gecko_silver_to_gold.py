@@ -66,12 +66,8 @@ df = df.withColumn('top_n_losers', F.when(F.row_number().over(window_loss) <= 5,
 
 
 # Snapshot ID
-def generate_snapshot_id(id_val, ts):
-    s = f"{id_val}_{ts}"
-    return hashlib.md5(s.encode()).hexdigest()
-
-snapshot_udf = udf(generate_snapshot_id, StringType())
-df = df.withColumn('snapshot_id', snapshot_udf(F.col('id'), F.col('last_updated').cast(StringType())))
+df = df.withColumn("last_updated_str", F.date_format("last_updated", "yyyyMMddHHmmss"))
+df = df.withColumn("snapshot_id", F.concat(F.col("id"), F.col("last_updated_str")))
 
 # colunas finais do nosso gold
 final_cols = ['id','name','current_price','high_24h','low_24h','avg_price','price_range','volatility',

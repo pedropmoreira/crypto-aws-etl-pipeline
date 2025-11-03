@@ -1,4 +1,4 @@
-# Data Lakehouse Completo: CoinGecko ETL (Airflow, AWS Glue, PostgreSQL DW)
+# Data Lakehouse Completo: CoinGecko ETL (Airflow, AWS Glue, PostgreSQL DW / OLTP)
 
 Este projeto implementa uma pipeline completa de engenharia de dados que realiza toda a ETL de informações de criptomoedas.  
 Primeiramente acontece a coleta de dados da API pública da CoinGecko, processa e transforma as informações em diferentes camadas de armazenamento do Bucket S3(bronze, silver, gold), e por fim, armazena duas versões dos dados no PostgreSQL:
@@ -292,17 +292,197 @@ cron(0 13 ? * 2 *)
 
 - Configure o scheduler é so fazer cron(30 13 ? * 2 *).
 
-- Agora vamos criar o database da camada gold .
 
-- Agora vamos rodar o crawler da camada gold tambem .
+### 8.3 Agora vamos criar o database da camada gold .
 
+### 8.4 Agora vamos rodar o crawler da camada gold tambem .
 - Configure o Scheduler para : cron(45 13 ? * 2 *).
 
+### 8.5 versão final dos dados na layer gold : 
+```
+{
+    "id":"lombard-staked-btc",
+    "name":"Lombard Staked BTC",
+    "current_price":107429,"high_24h":111727,
+    "low_24h":106587,
+    "avg_price":109157,
+    "price_range":5140,
+    "volatility":0.0470881391023938,
+    "price_change_24h":-4159.485680905098,
+    "percentage_7d":-2.10035461481091,
+    "market_cap":1303673055,
+    "market_cap_rank":95,
+    "market_cap_share":0.00035046558802565616,
+    "ath":125812,"atl":52119,
+    "drawdown_since_ath":0.1461148380122723,
+    "circulating_supply":12132.55546961,
+    "max_supply":null,
+    "fully_diluted_valuation":1303673055,
+    "supply_utilization":null,
+    "rank_by_marketcap":95,
+    "top_n_gainers":0,
+    "top_n_losers":1,
+    "volume":8004376,
+    "last_updated":"2025-10-30 21:45:33.287000000",
+    "snapshot_id":"lombard-staked-btc20251030214533"
+}
+```
 
 ## 9️⃣ Modelar Bancos de Dados
-###### Em andamento...
-- Schema OLTP (normalizado).
-- Schema DW (modelo estrela).
+
+### 9.1 Schema DW (modelo estrela).
+
+### - Primeiramente a modelagem. 
+![Modelo do Data Warehouse](./model/modelo_dw.png)
+
+
+### - Cole no pgadmin4 sl o script 'script_create_DW_star_schema' na pasta model. 
+```
+-- sempre começar com as dimensões : 
+
+
+CREATE TABLE dim_moeda (
+    id_moeda SERIAL PRIMARY KEY,
+    id_original VARCHAR(100) NOT NULL,
+    nome_moeda VARCHAR(150),
+    max_supply NUMERIC
+);
+
+
+CREATE TABLE dim_tempo (
+    id_tempo SERIAL PRIMARY KEY,       
+    data_hora TIMESTAMP NOT NULL,
+    data DATE,
+    hora INT,
+    dia INT,
+    mes INT,
+    ano INT
+);
+
+CREATE TABLE dim_fonte (
+    id_fonte SERIAL PRIMARY KEY,
+    nome_fonte VARCHAR(100),
+    tipo_fonte VARCHAR(50),
+    url_base VARCHAR(300),
+    frequencia_coleta VARCHAR(50),
+    formato_dado VARCHAR(50)
+);
+
+
+CREATE TABLE fact_dados_cripto (
+    id_fato_dados SERIAL PRIMARY KEY,
+    id_moeda INT NOT NULL REFERENCES dim_moeda(id_moeda),
+    id_fonte INT NOT NULL REFERENCES dim_fonte(id_fonte),
+    id_tempo INT NOT NULL REFERENCES dim_tempo(id_tempo),
+    id_snapshot INT NOT NULL REFERENCES dim_snapshot(id_snapshot),
+    current_price NUMERIC,
+    high_24 NUMERIC,
+    low_24 NUMERIC,
+    avg_price NUMERIC,
+    price_range NUMERIC,
+    volatility NUMERIC,
+    price_change NUMERIC,
+    percentage_7d NUMERIC,
+    market_cap NUMERIC,
+    market_cap_rank INT,
+    market_cap_share NUMERIC,
+    volume NUMERIC,
+    circulating_supply NUMERIC,
+    fully_diluted_valuation NUMERIC,
+    drawdown_since_ath NUMERIC,
+    rank_by_marketcap INT,
+	top_n_gainers INT CHECK (top_n_gainers IN (0,1)),
+	top_n_losers INT CHECK (top_n_losers IN (0,1))
+);
+
+
+```
+### 9.2 Schema OLTP (normalizado).
+
+### Modelo Conceitual: 
+![Modelo do Data Warehouse](./model/modelo3fn.png)
+
+### Modelo Lógico : 
+```
+moeda(*id_moeda*, *snapshot_id*, id_original, nome, max_supply, last_update)
+
+precos(*id_preco*, **id_moeda**, **snapshot_id**, current_price, high_24h, low_24h, avg_price, price_range, volatility, price_change_24h, price_change_percentage_7d)
+(**id_moeda**, **snapshot_id**) referencia moeda(id_moeda, snapshot_id)
+
+mercado(*id_mercado*, **id_moeda**, **snapshot_id**, market_cap_share, market_cap_rank, market_cap, circulating_supply, fully_diluted_valuation, total_volume, top_n_gainers, top_n_losers)
+(**id_moeda**, **snapshot_id**) referencia moeda(id_moeda, snapshot_id)
+
+historico(*id_historico*, **id_moeda**, **snapshot_id**, atl, ath, drawdown_since_ath)
+(**id_moeda**, **snapshot_id**) referencia moeda(id_moeda, snapshot_id)
+
+```
+
+### Modelo Físico: (Rode o Script 'script_create_DW_3fn' da pasta models )
+```
+CREATE TABLE moeda (
+    id_moeda INT NOT NULL,
+    snapshot_id VARCHAR(100) NOT NULL,
+    id_original VARCHAR(100) NOT NULL,
+    max_supply NUMERIC,
+    nome VARCHAR(150),
+    last_update TIMESTAMP,
+    CONSTRAINT pk_moeda PRIMARY KEY (id_moeda, snapshot_id)
+);
+
+
+CREATE TABLE precos (
+    id_preco SERIAL PRIMARY KEY,
+    id_moeda INT NOT NULL,
+    snapshot_id VARCHAR(100) NOT NULL,
+    current_price NUMERIC,
+    high_24h NUMERIC,
+    low_24h NUMERIC,
+    avg_price NUMERIC,
+    price_range NUMERIC,
+    volatility NUMERIC,
+    price_change_24h NUMERIC,
+    price_change_percentage_7d NUMERIC,
+    CONSTRAINT fk_precos_moeda 
+        FOREIGN KEY (id_moeda, snapshot_id)
+        REFERENCES moeda(id_moeda, snapshot_id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE mercado (
+    id_mercado SERIAL PRIMARY KEY,
+    id_moeda INT NOT NULL,
+    snapshot_id VARCHAR(100) NOT NULL,
+    market_cap_share NUMERIC,
+    market_cap_rank INT,
+    market_cap NUMERIC,
+    circulating_supply NUMERIC,
+    fully_diluted_valuation NUMERIC,
+    total_volume NUMERIC,
+    top_n_gainers INT CHECK (top_n_gainers IN (0,1)),
+    top_n_losers INT CHECK (top_n_losers IN (0,1)),
+    CONSTRAINT fk_mercado_moeda 
+        FOREIGN KEY (id_moeda, snapshot_id)
+        REFERENCES moeda(id_moeda, snapshot_id)
+        ON DELETE CASCADE
+);
+
+
+CREATE TABLE historico (
+    id_historico SERIAL PRIMARY KEY,
+    id_moeda INT NOT NULL,
+    snapshot_id VARCHAR(100) NOT NULL,
+    atl NUMERIC,
+    ath NUMERIC,
+    drawdown_since_ath NUMERIC,
+    CONSTRAINT fk_historico_moeda 
+        FOREIGN KEY (id_moeda, snapshot_id)
+        REFERENCES moeda(id_moeda, snapshot_id)
+        ON DELETE CASCADE
+);
+``` 
+
+
 
 ## 1️⃣0️⃣ Ingestão nos Bancos
 - Carregar dados da camada gold no PostgreSQL.
