@@ -535,3 +535,6 @@ python /opt/airflow/scripts/load_gold_to_3fn.py
 ### 11.4 EXEMPLO DE DASHBOARD: 
 ![Dashboard - Metrics of the coins](./views_DW_tableau/Dashboard%20-%20Metrics%20of%20the%20coins%20.png)
 
+- Link tableau : 
+[Veja o dashboard no Tableau](https://public.tableau.com/app/profile/pedro.paulo.moreira.damasceno/viz/tableau_complet_with_data/Dashboard-Metricsofthecoins?publish=yes)
+
