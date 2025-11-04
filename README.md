@@ -8,7 +8,7 @@ Primeiramente acontece a coleta de dados da API pública da CoinGecko, processa 
 | Tipo de Banco              | Modelo       | Objetivo   |
 |:--------------------|:-------------:|--------------:|
 |  **OLTP**    | Normalizado (3FN) | Garantir ACID |
-|  **DW** | Modelo Estrela | Facilitar consultas analíticas e relatórios (Power BI) |
+|  **DW** | Modelo Estrela | Facilitar consultas analíticas e relatórios (Tableau) |
 
 ## DIAGRAMA TEXTO - Fluxo
 API (CoinGecko) -> Airflow (execução semanal) -> AWS S3 (Camada Bronze) ->  AWS Glue / PySpark (Limpeza e Transformações) -> AWS S3 (Camada Silver) -> 
