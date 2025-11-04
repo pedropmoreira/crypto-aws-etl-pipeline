@@ -12,7 +12,7 @@ Primeiramente acontece a coleta de dados da API pública da CoinGecko, processa 
 
 ## DIAGRAMA TEXTO - Fluxo
 API (CoinGecko) -> Airflow (execução semanal) -> AWS S3 (Camada Bronze) ->  AWS Glue / PySpark (Limpeza e Transformações) -> AWS S3 (Camada Silver) -> 
-Transformações (Camada Gold) -> PostgreSQL (OLTP + DW Estrela) -> Power BI (Dashboards)
+Transformações (Camada Gold) -> PostgreSQL (OLTP + DW Estrela) -> Tableau (Dashboards)
 
 ## 📈IMAGEM DIAGRAMA GERAL (Ainda preciso fazer)
 ![Diagrama Fluxo](./img_utils/diagrama_eng_dados.png)
