@@ -15,7 +15,7 @@ API (CoinGecko) -> Airflow (execução semanal) -> AWS S3 (Camada Bronze) ->  AW
 Transformações (Camada Gold) -> PostgreSQL (OLTP + DW Estrela) -> Power BI (Dashboards)
 
 ## 📈IMAGEM DIAGRAMA GERAL (Ainda preciso fazer)
-###### Em andamento ...
+![Diagrama Fluxo](./img_utils/diagrama_eng_dados.png)
 
 # ▶️ EXECUÇÃO DO PROJETO
 
@@ -520,6 +520,18 @@ docker exec -it (nome do seu worker) bash
 python /opt/airflow/scripts/load_gold_to_3fn.py
 ```
 
-## 1️⃣1️⃣ Power BI / Tableau
-- Conectar ao schema DW do PostgreSQL.
-- Criar dashboards interativos de análises de criptomoedas.
+## 1️⃣1️⃣ Tableau
+### 11.1 Conectar ao PostgreSQL no Tableau. 
+- Pode ser necessário instalar o Driver de conexão do PostgreSQL  
+
+### 11.2 No projeto entre na pasta (views_DW_tableau), depois rode o script (views_DW_tableau) :
+
+- Desse modo vamos criar novas views , que serão usadas na modelagem.
+
+### 11.3 Usando o tableau : 
+- Abra o arquivo twbx (tableau_complet_with_data.twbx).
+- Trabalhe seus dashboards que quiser! 
+
+### 11.4 EXEMPLO DE DASHBOARD: 
+![Dashboard - Metrics of the coins](./views_DW_tableau/Dashboard%20-%20Metrics%20of%20the%20coins%20.png)
+
