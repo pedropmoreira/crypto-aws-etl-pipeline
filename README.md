@@ -538,3 +538,29 @@ python /opt/airflow/scripts/load_gold_to_3fn.py
 - Link tableau : 
 [Veja o dashboard no Tableau](https://public.tableau.com/app/profile/pedro.paulo.moreira.damasceno/viz/tableau_complet_with_data/Dashboard-Metricsofthecoins?publish=yes)
 
+## 12 - Power BI
+
+### 12.1 Faça integração do Power BI com o Postgres.
+### 12.2 Drop na Coluna max_supply necessário.
+
+### 12.3 Ver se as relações estão corretas : 
+![Relações  Corretas](./img_utils/relacoes_DW.png)
+
+### 12.4 Agora vamos criar algumas medidas úteis com DAX: 
+```
+MarketCap_Total = SUM(fact_dados_cripto[market_cap])
+
+Volatilidade_Média = AVERAGE(fact_dados_cripto[volatility])
+
+Faixa_Precos = SUM(fact_dados_cripto[high_24]) - SUM(fact_dados_cripto[low_24])
+
+```
+
+### 12.5 - Exemplo (Sem escolher moeda): 
+![Exemplo Power BI](./img_utils/powerbi-coins_page-0001.jpg)
+
+
+### 12.6 - Exemplo (Escolhendo moeda): 
+![Exemplo Power BI com moeda selecionada](./img_utils/2_page-0001.jpg)
+
+### 12.7 - O arquivo completo se encontra em Power BI files
